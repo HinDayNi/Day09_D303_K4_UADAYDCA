@@ -1,0 +1,42 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Sensitive Credentials / Keys
+firebase/
+.firebase/
+*-firebase-*.json
+firebase-admin.json
+*.pem
+
+# Uploads & Temp processing directories
+uploads/
+input/
+output/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pytest & mypy
+.pytest_cache/
+.mypy_cache/
+
+serviceAccountKey.json
