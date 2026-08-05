@@ -123,13 +123,21 @@ class CoordinatorAgent:
         self.assembler = ResultAssembler()
         self.prompt = COORDINATOR_SYSTEM_PROMPT
 
-        # Khởi tạo các Agent chuyên biệt
-        self.customer_agent = customer_agent or CustomerAgent(repo=self.repo)
-        self.order_product_agent = order_product_agent or OrderProductAgent(repo=self.repo)
-        self.delivery_agent = delivery_agent or DeliveryAgent(repo=self.repo)
-        self.payment_agent = payment_agent or PaymentAgent(repo=self.repo)
-        self.policy_agent = policy_agent or PolicyAgent(repo=self.repo)
-        self.verifier_agent = verifier_agent or VerifierAgent(repo=self.repo)
+        # Khởi tạo các Agent chuyên biệt an toàn
+        def _init_agent(agent_obj, agent_cls):
+            if agent_obj is not None:
+                return agent_obj
+            try:
+                return agent_cls(repo=self.repo)
+            except TypeError:
+                return agent_cls()
+
+        self.customer_agent = _init_agent(customer_agent, CustomerAgent)
+        self.order_product_agent = _init_agent(order_product_agent, OrderProductAgent)
+        self.delivery_agent = _init_agent(delivery_agent, DeliveryAgent)
+        self.payment_agent = _init_agent(payment_agent, PaymentAgent)
+        self.policy_agent = _init_agent(policy_agent, PolicyAgent)
+        self.verifier_agent = _init_agent(verifier_agent, VerifierAgent)
 
         # Agent Registry (Danh mục các Agent sẵn sàng được chọn gọi động)
         self.agent_registry = {

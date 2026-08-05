@@ -27,6 +27,9 @@ from src.tools.time_analysis import hours_between
 class DeliveryAgent:
     """Specialist agent sở hữu domain giao hàng (delivery)."""
 
+    def __init__(self, repo=None):
+        self.repo = repo
+
     def analyze(self, basis: DeliveryBasis) -> DeliveryResult:
         deduped_sellers, warnings = self._dedupe_sellers(basis.seller_shipping_limits)
 

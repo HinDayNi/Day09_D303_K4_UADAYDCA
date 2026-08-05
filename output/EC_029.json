@@ -36,15 +36,8 @@
     "delivered_at": "2018-03-20 15:00:00",
     "estimated_delivery_at": "2018-03-25 00:00:00",
     "carrier_handoff_at": "2018-03-14 10:00:00",
-    "delivery_variance_hours": -120.0,
-    "seller_handoff_analysis": [
-      {
-        "seller_id": "seller_stub_001",
-        "shipping_limit_at": "2018-03-15 20:31:15",
-        "handoff_variance_hours": -34.5,
-        "late_handoff": false
-      }
-    ],
+    "delivery_variance_hours": -105.0,
+    "seller_handoff_analysis": [],
     "late_handoff_seller_ids": []
   },
   "payment_reconciliation": {
