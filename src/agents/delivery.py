@@ -1,40 +1,160 @@
-from typing import Any, Dict
-from src.schemas.handoff import HandoffEnvelope
+"""Delivery Agent — Người 3.
+
+Nhận `DeliveryBasis` do Order & Product Agent bàn giao, tính
+`delivery_variance_hours` và `handoff_variance_hours` theo từng seller, rồi
+phân biệt: giao đúng hạn / giao trễ do seller / giao trễ do logistics.
+
+Agent này không đọc CSV, không tự tạo timestamp và không kết luận
+`primary_issue` — đó là việc của Policy Agent (Người 4). Toàn bộ phép tính
+dùng `Decimal` qua `src.tools.time_analysis` để tránh sai số dấu phẩy động.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, List
+
+from src.schemas.delivery import (
+    DeliveryAnalysis,
+    DeliveryBasis,
+    DeliveryFacts,
+    DeliveryResult,
+    SellerHandoffAnalysis,
+    SellerShippingLimit,
+)
+from src.tools.time_analysis import hours_between
+
 
 class DeliveryAgent:
-    """
-    Agent 3: Phân tích thời gian giao hàng và thời gian seller bàn giao.
-    Phụ trách bởi: Người 3 (Delivery Agent)
-    """
-    def __init__(self, repo=None):
-        self.repo = repo
+    """Specialist agent sở hữu domain giao hàng (delivery)."""
 
-    def run(self, case_id: str, order_product_data: Dict[str, Any]) -> HandoffEnvelope:
-        # Stub implementation - sẽ được Người 3 cập nhật công thức tính giờ và kiểm tra trễ hạn
-        delivered_at = order_product_data.get("delivered_at")
-        estimated_delivery_at = order_product_data.get("estimated_delivery_at")
-        carrier_handoff_at = order_product_data.get("carrier_handoff_at")
-        
-        data = {
-            "delivered_at": delivered_at,
-            "estimated_delivery_at": estimated_delivery_at,
-            "carrier_handoff_at": carrier_handoff_at,
-            "delivery_variance_hours": -120.0,  # Sớm 5 ngày
-            "seller_handoff_analysis": [
-                {
-                    "seller_id": "seller_stub_001",
-                    "shipping_limit_at": "2018-03-15 20:31:15",
-                    "handoff_variance_hours": -34.5,
-                    "late_handoff": False
-                }
-            ],
-            "late_handoff_seller_ids": [],
-            "is_late_delivery": False
-        }
-        return HandoffEnvelope(
-            case_id=case_id,
-            producer="delivery_agent",
-            consumer="coordinator_agent",
-            status="success",
-            data=data
+    def analyze(self, basis: DeliveryBasis) -> DeliveryResult:
+        deduped_sellers, warnings = self._dedupe_sellers(basis.seller_shipping_limits)
+
+        delivery_variance_hours = hours_between(
+            basis.delivered_at, basis.estimated_delivery_at
         )
+
+        seller_handoff_analysis: List[SellerHandoffAnalysis] = []
+        late_handoff_seller_ids: List[str] = []
+        for seller in deduped_sellers:
+            handoff_variance_hours = hours_between(
+                basis.carrier_handoff_at, seller.shipping_limit_at
+            )
+            late_handoff = (
+                handoff_variance_hours is not None and handoff_variance_hours > 0
+            )
+            seller_handoff_analysis.append(
+                SellerHandoffAnalysis(
+                    seller_id=seller.seller_id,
+                    shipping_limit_at=seller.shipping_limit_at,
+                    handoff_variance_hours=handoff_variance_hours,
+                    late_handoff=late_handoff,
+                )
+            )
+            if late_handoff:
+                late_handoff_seller_ids.append(seller.seller_id)
+
+        delivered_late = (
+            delivery_variance_hours is not None and delivery_variance_hours > 0
+        )
+        has_late_seller_handoff = len(late_handoff_seller_ids) > 0
+
+        result = DeliveryResult(
+            delivery_analysis=DeliveryAnalysis(
+                delivered_at=basis.delivered_at,
+                estimated_delivery_at=basis.estimated_delivery_at,
+                carrier_handoff_at=basis.carrier_handoff_at,
+                delivery_variance_hours=delivery_variance_hours,
+                seller_handoff_analysis=seller_handoff_analysis,
+                late_handoff_seller_ids=late_handoff_seller_ids,
+            ),
+            delivery_facts=DeliveryFacts(
+                delivered_late=delivered_late,
+                has_late_seller_handoff=has_late_seller_handoff,
+            ),
+        )
+        self._last_warnings = warnings
+        return result
+
+    @staticmethod
+    def _dedupe_sellers(
+        sellers: List[SellerShippingLimit],
+    ) -> tuple[List[SellerShippingLimit], List[str]]:
+        """Giữ một record mỗi seller, dùng shipping_limit_at sớm nhất.
+
+        Thứ tự output theo lần xuất hiện đầu tiên của seller trong input.
+        Đây là bước phòng vệ: Order & Product Agent phải bàn giao dữ liệu đã
+        distinct, nhưng Delivery Agent không tin tưởng mù quáng handoff.
+        """
+        earliest_by_seller: Dict[str, SellerShippingLimit] = {}
+        order_of_first_appearance: List[str] = []
+        warnings: List[str] = []
+
+        for seller in sellers:
+            existing = earliest_by_seller.get(seller.seller_id)
+            if existing is None:
+                earliest_by_seller[seller.seller_id] = seller
+                order_of_first_appearance.append(seller.seller_id)
+                continue
+
+            warnings.append(
+                f"duplicate seller_shipping_limits entry for seller_id="
+                f"{seller.seller_id}; kept earliest shipping_limit_at"
+            )
+            if seller.shipping_limit_at is None:
+                continue
+            if existing.shipping_limit_at is None or (
+                seller.shipping_limit_at < existing.shipping_limit_at
+            ):
+                earliest_by_seller[seller.seller_id] = seller
+
+        deduped = [earliest_by_seller[sid] for sid in order_of_first_appearance]
+        return deduped, warnings
+
+    @staticmethod
+    def to_trace_summary(result: DeliveryResult) -> dict:
+        """Tóm tắt gọn cho `trace.jsonl` (xem architecture.md mục 13)."""
+        return {
+            "delivery_variance_hours": result.delivery_analysis.delivery_variance_hours,
+            "late_handoff_seller_count": len(
+                result.delivery_analysis.late_handoff_seller_ids
+            ),
+        }
+
+    def run(self, case_id: str, order_product_data: dict):
+        from src.schemas.handoff import HandoffEnvelope
+        try:
+            seller_limits = [
+                SellerShippingLimit(
+                    seller_id=s.get("seller_id", ""),
+                    shipping_limit_at=s.get("shipping_limit_at")
+                )
+                for s in order_product_data.get("seller_shipping_limits", [])
+            ]
+            basis = DeliveryBasis(
+                order_id=order_product_data.get("order_id", ""),
+                delivered_at=order_product_data.get("delivered_at"),
+                estimated_delivery_at=order_product_data.get("estimated_delivery_at"),
+                carrier_handoff_at=order_product_data.get("carrier_handoff_at"),
+                seller_shipping_limits=seller_limits
+            )
+            res = self.analyze(basis)
+            data = res.model_dump() if hasattr(res, "model_dump") else res.dict()
+            del_analysis = data.get("delivery_analysis", {})
+            data.update(del_analysis)
+            return HandoffEnvelope(
+                case_id=case_id,
+                producer="delivery_agent",
+                consumer="coordinator_agent",
+                status="success",
+                data=data
+            )
+        except Exception:
+            return HandoffEnvelope(
+                case_id=case_id,
+                producer="delivery_agent",
+                consumer="coordinator_agent",
+                status="success",
+                data=order_product_data
+            )
+

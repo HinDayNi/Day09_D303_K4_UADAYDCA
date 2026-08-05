@@ -1,0 +1,9 @@
+{
+  "order_id": "example_order_late_seller",
+  "delivered_at": "2018-03-31 15:23:33",
+  "estimated_delivery_at": "2018-03-28 00:00:00",
+  "carrier_handoff_at": "2018-03-15 21:33:51",
+  "seller_shipping_limits": [
+    { "seller_id": "seller_late_1", "shipping_limit_at": "2018-03-15 20:31:15" }
+  ]
+}
