@@ -1,0 +1,118 @@
+from typing import Any, Dict, List
+
+class ResultAssembler:
+    """
+    Tích hợp kết quả từ các Specialist Agent và Policy Agent thành 1 candidate JSON hoàn chỉnh
+    đúng chuẩn Output Schema của EC_POLICY_V2.
+    """
+    def assemble(self, case_id: str, fact_bundle: dict, policy_data: dict) -> Dict[str, Any]:
+        cust = fact_bundle.get("customer_result", {})
+        ord_prod = fact_bundle.get("order_product_result", {})
+        pay = fact_bundle.get("payment_result", {})
+        deliv = fact_bundle.get("delivery_result", {})
+
+        claimed_order_id = ord_prod.get("order_id", "")
+
+        # 1. Affected entities
+        items_raw = ord_prod.get("items", [])
+        item_ids = [f"{claimed_order_id}:{it.get('order_item_id')}" for it in items_raw][:5]
+        order_ids = [claimed_order_id][:5] if claimed_order_id else []
+        seller_ids = ord_prod.get("sellers", [])[:3]
+        payment_ids = pay.get("payment_ids", [])[:5]
+
+        # 2. Customer context
+        customer_unique_id = cust.get("customer_unique_id", "")
+        related_order_ids = cust.get("related_order_ids", [])[:5]
+
+        # 3. Product context
+        product_ids = ord_prod.get("products", [])[:5]
+        category_names = ord_prod.get("categories", [])[:5]
+
+        # 4. Delivery analysis
+        delivery_analysis = {
+            "delivered_at": deliv.get("delivered_at"),
+            "estimated_delivery_at": deliv.get("estimated_delivery_at"),
+            "carrier_handoff_at": deliv.get("carrier_handoff_at"),
+            "delivery_variance_hours": deliv.get("delivery_variance_hours"),
+            "seller_handoff_analysis": deliv.get("seller_handoff_analysis", []),
+            "late_handoff_seller_ids": deliv.get("late_handoff_seller_ids", [])
+        }
+
+        # 5. Payment reconciliation
+        payment_reconciliation = {
+            "currency": pay.get("currency", "BRL"),
+            "item_total_brl": pay.get("item_total_brl"),
+            "freight_total_brl": pay.get("freight_total_brl"),
+            "expected_total_brl": pay.get("expected_total_brl"),
+            "payment_total_brl": pay.get("payment_total_brl"),
+            "difference_brl": pay.get("difference_brl"),
+            "reconciled": pay.get("reconciled"),
+            "payment_types": pay.get("payment_types", [])
+        }
+
+        # 6. Evidence IDs generation
+        evidence_ids = []
+        if claimed_order_id:
+            evidence_ids.append(f"order:{claimed_order_id}")
+        for it_id in item_ids:
+            evidence_ids.append(f"item:{it_id}")
+        for p_id in payment_ids:
+            evidence_ids.append(f"payment:{p_id}")
+        
+        # Add responsible seller evidence
+        for party in policy_data.get("responsible_parties", []):
+            if party.get("party_type") == "seller":
+                s_id = party.get("party_id")
+                if s_id and s_id not in ["OLIST_PLATFORM", "LOGISTICS_PROVIDER"]:
+                    evidence_ids.append(f"seller:{s_id}")
+
+        # Add policy root cause evidence
+        ranked = policy_data.get("ranked_causes", [])
+        if ranked:
+            top_cause = ranked[0].get("cause_code")
+            if top_cause:
+                evidence_ids.append(f"policy:{top_cause}")
+
+        # Deduplicate and cap at 20
+        unique_evidences = []
+        for ev in evidence_ids:
+            if ev not in unique_evidences:
+                unique_evidences.append(ev)
+        evidence_ids = unique_evidences[:20]
+
+        candidate = {
+            "case_id": case_id,
+            "case_assessment": {
+                "primary_issue": policy_data.get("primary_issue"),
+                "secondary_issues": policy_data.get("secondary_issues", []),
+                "case_status": policy_data.get("case_status"),
+                "confidence": policy_data.get("confidence", 0.95)
+            },
+            "affected_entities": {
+                "order_ids": order_ids,
+                "item_ids": item_ids,
+                "seller_ids": seller_ids,
+                "payment_ids": payment_ids
+            },
+            "customer_context": {
+                "customer_unique_id": customer_unique_id,
+                "related_order_ids": related_order_ids
+            },
+            "product_context": {
+                "product_ids": product_ids,
+                "category_names": category_names
+            },
+            "delivery_analysis": delivery_analysis,
+            "payment_reconciliation": payment_reconciliation,
+            "root_cause_analysis": {
+                "ranked_causes": policy_data.get("ranked_causes", [])[:3],
+                "responsible_parties": policy_data.get("responsible_parties", [])[:3]
+            },
+            "evidence_ids": evidence_ids,
+            "financial_resolution": {
+                "currency": "BRL",
+                "recommended_refund_brl": policy_data.get("recommended_refund_brl", 0.0)
+            },
+            "resolution_actions": policy_data.get("resolution_actions", [])[:5]
+        }
+        return candidate
