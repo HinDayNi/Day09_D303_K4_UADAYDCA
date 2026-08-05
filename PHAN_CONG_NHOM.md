@@ -6,8 +6,8 @@ Nhóm xây dựng hệ thống Multi-Agent để điều tra 50 yêu cầu hỗ 
 
 | Thành viên | Vai trò chính | Phần việc phụ trách |
 | --- | --- | --- |
-| Vũ Ngọc Hùng| Trưởng nhóm – Coordinator/Orchestration | Điều phối agent, thiết kế luồng xử lý end-to-end, tích hợp module và chạy 50 case |
-| Đỗ Thành Đạt| Data, Customer & Product Agent | Nạp và join dữ liệu; tra cứu khách hàng, lịch sử mua hàng, item, seller, product và category |
+| Vũ Ngọc Hùng | Trưởng nhóm – Coordinator/Orchestration | Điều phối agent, thiết kế luồng xử lý end-to-end, tích hợp module và chạy 50 case |
+| Đỗ Thành Đạt | Data, Customer & Product Agent | Nạp và join dữ liệu; tra cứu khách hàng, lịch sử mua hàng, item, seller, product và category |
 | Nguyễn Công Việt Quang | Delivery Agent | Phân tích thời gian giao hàng, xác định seller/carrier giao trễ và tính các chỉ số thời gian |
 | Nguyễn Thị Thanh Hiền | Payment & Policy Agent | Đối soát thanh toán, áp dụng `EC_POLICY_V2`, xác định trách nhiệm, hoàn tiền và hành động xử lý |
 | Trần Thị Hường | Verifier, Testing & Submission | Kiểm tra schema, evidence, giới hạn mảng, tạo trace/metadata, kiểm thử và đóng gói bài |
