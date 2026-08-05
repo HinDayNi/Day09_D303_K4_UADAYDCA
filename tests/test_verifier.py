@@ -1,9 +1,7 @@
+import copy
 import json
 from pathlib import Path
 
-from src.verifier import validate_output
-
-import copy
 from src.verifier import validate_output
 
 VALID_OUTPUT = {
@@ -86,10 +84,8 @@ def test_validate_missing_required_fields_returns_errors():
 
 
 def test_validate_rounding_and_status_errors():
-    invalid = dict(VALID_OUTPUT)
-    invalid["case_assessment"] = dict(VALID_OUTPUT["case_assessment"])
+    invalid = copy.deepcopy(VALID_OUTPUT)
     invalid["case_assessment"]["case_status"] = "pending"
-    invalid["payment_reconciliation"] = dict(VALID_OUTPUT["payment_reconciliation"])
     invalid["payment_reconciliation"]["item_total_brl"] = 194.125
     errors = validate_output(invalid)
     assert "case_assessment.case_status must be 'action_required' or 'no_action'." in errors
@@ -97,23 +93,21 @@ def test_validate_rounding_and_status_errors():
 
 
 def test_validate_array_length_limits():
-    invalid = dict(VALID_OUTPUT)
-    invalid["affected_entities"] = dict(VALID_OUTPUT["affected_entities"])
+    invalid = copy.deepcopy(VALID_OUTPUT)
     invalid["affected_entities"]["order_ids"] = ["o1", "o2", "o3", "o4", "o5", "o6"]
     errors = validate_output(invalid)
     assert "affected_entities.order_ids may contain at most 5 elements." in errors
 
 
 def test_validate_timestamp_format_errors():
-    invalid = dict(VALID_OUTPUT)
-    invalid["delivery_analysis"] = dict(VALID_OUTPUT["delivery_analysis"])
+    invalid = copy.deepcopy(VALID_OUTPUT)
     invalid["delivery_analysis"]["delivered_at"] = "2018/03/31"
     errors = validate_output(invalid)
     assert "delivery_analysis.delivered_at must be null or 'YYYY-MM-DD HH:MM:SS'." in errors
 
 
 def test_validate_evidence_ids_array():
-    invalid = dict(VALID_OUTPUT)
+    invalid = copy.deepcopy(VALID_OUTPUT)
     invalid["evidence_ids"] = "not-an-array"
     errors = validate_output(invalid)
     assert "evidence_ids must be an array." in errors
@@ -125,13 +119,50 @@ def test_validate_invalid_evidence_id_format():
     errors = validate_output(invalid)
     assert any("Invalid evidence_id format" in err for err in errors)
 
+
 def test_validate_no_item_order_rules():
     invalid = copy.deepcopy(VALID_OUTPUT)
     invalid["affected_entities"]["item_ids"] = []
-    # No item order thì seller_ids phải rỗng [], expected_total_brl phải là null
-    invalid["affected_entities"]["seller_ids"] = ["seller_1"] 
+    invalid["affected_entities"]["seller_ids"] = ["seller_1"]
     invalid["payment_reconciliation"]["expected_total_brl"] = 212.27
     
     errors = validate_output(invalid)
     assert "No-item order must have empty seller_ids []." in errors
     assert "No-item order must have null for expected_total_brl, difference_brl, and reconciled." in errors
+
+def test_validate_all_output_files_in_folder():
+    output_dir = Path("output")
+    output_files = sorted(list(output_dir.glob("EC_*.json"))) if output_dir.exists() else []
+
+    # Nếu chưa có file output nào (do Agent chưa chạy), bỏ qua test này
+    if not output_files:
+        return
+
+    from src.verifier import clear_previous_trace, append_trace_entry, write_metadata
+
+    clear_previous_trace()
+
+    all_errors = {}
+    for file_path in output_files:
+        case_id = file_path.stem
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        errors = validate_output(data, check_csv=True)
+        if errors:
+            all_errors[case_id] = errors
+            append_trace_entry(case_id, "FAILED", {"errors": errors})
+        else:
+            append_trace_entry(case_id, "PASSED", {"file": str(file_path)})
+
+    # Ghi metadata khi có ít nhất 1 file chạy qua
+    write_metadata(
+        model_name="qwen2.5-7b-instruct",
+        param_size="7B",
+        framework="Custom Multi-Agent"
+    )
+
+    # Nếu có case lỗi, pytest mới báo fail
+    assert not all_errors, f"Phát hiện lỗi ở các case: {all_errors}"
+
+    
