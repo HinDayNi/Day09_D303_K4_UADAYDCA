@@ -26,14 +26,15 @@ class LLMClient:
                     self.client = OpenAI(
                         base_url=self.base_url,
                         api_key=self.api_key,
-                        timeout=10.0,
+                        timeout=5.0,
                         default_headers={
                             "HTTP-Referer": "https://github.com/VinUni-AI20k/K4-Day9-Multi-Agent-A2A",
                             "X-Title": "E-Commerce Dispute Multi-Agent Pipeline"
                         }
                     )
                 else:
-                    self.client = OpenAI(api_key=self.api_key, timeout=10.0)
+                    self.client = OpenAI(api_key=self.api_key, timeout=5.0)
+
 
             except Exception as e:
                 logger.warning(f"Failed to initialize OpenAI/OpenRouter client: {e}")
