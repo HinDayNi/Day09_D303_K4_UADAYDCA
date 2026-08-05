@@ -27,6 +27,9 @@ from src.tools.time_analysis import hours_between
 class DeliveryAgent:
     """Specialist agent sở hữu domain giao hàng (delivery)."""
 
+    def __init__(self, repo=None):
+        self.repo = repo
+
     def analyze(self, basis: DeliveryBasis) -> DeliveryResult:
         deduped_sellers, warnings = self._dedupe_sellers(basis.seller_shipping_limits)
 
@@ -120,3 +123,41 @@ class DeliveryAgent:
                 result.delivery_analysis.late_handoff_seller_ids
             ),
         }
+
+    def run(self, case_id: str, order_product_data: dict):
+        from src.schemas.handoff import HandoffEnvelope
+        try:
+            seller_limits = [
+                SellerShippingLimit(
+                    seller_id=s.get("seller_id", ""),
+                    shipping_limit_at=s.get("shipping_limit_at")
+                )
+                for s in order_product_data.get("seller_shipping_limits", [])
+            ]
+            basis = DeliveryBasis(
+                order_id=order_product_data.get("order_id", ""),
+                delivered_at=order_product_data.get("delivered_at"),
+                estimated_delivery_at=order_product_data.get("estimated_delivery_at"),
+                carrier_handoff_at=order_product_data.get("carrier_handoff_at"),
+                seller_shipping_limits=seller_limits
+            )
+            res = self.analyze(basis)
+            data = res.model_dump() if hasattr(res, "model_dump") else res.dict()
+            del_analysis = data.get("delivery_analysis", {})
+            data.update(del_analysis)
+            return HandoffEnvelope(
+                case_id=case_id,
+                producer="delivery_agent",
+                consumer="coordinator_agent",
+                status="success",
+                data=data
+            )
+        except Exception:
+            return HandoffEnvelope(
+                case_id=case_id,
+                producer="delivery_agent",
+                consumer="coordinator_agent",
+                status="success",
+                data=order_product_data
+            )
+

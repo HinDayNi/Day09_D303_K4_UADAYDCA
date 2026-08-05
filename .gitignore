@@ -1,23 +1,40 @@
+# Virtual environment
+venv/
+.venv/
+*.egg-info/
+
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
-.venv/
-venv/
-*.egg-info/
 
-# Env (keys)
+# Environment
 .env
+.env.*
+!.env.example
 
-# Temp PDF conversion cache
+# Sensitive Credentials / Keys
+firebase/
+.firebase/
+*-firebase-*.json
+firebase-admin.json
+*.pem
+serviceAccountKey.json
+
+# Uploads & Temp processing directories
+uploads/
+input/
+output/
 data/_tmp_pdf/
-
-# Temp / cache
-.pytest_cache/
-*.tmp
 pageindex_doc_ids.json
 pageindex_pdfs/
 chroma_db/
+
+# Logs & Cache
+*.log
+.pytest_cache/
+.mypy_cache/
+*.tmp
 
 # IDE
 .vscode/
@@ -26,5 +43,3 @@ chroma_db/
 # OS
 .DS_Store
 Thumbs.db
-
-input/

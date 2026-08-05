@@ -1,2 +1,9 @@
-pydantic>=2.6
-pytest>=8.0
+pydantic>=2.6.0
+pandas>=2.0.0
+python-dotenv>=1.0.0
+typing-extensions>=4.5.0
+tqdm>=4.65.0
+pytest>=8.0.0
+openai>=1.0.0
+httpx>=0.25.0
+

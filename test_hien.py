@@ -4,17 +4,20 @@ import json
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.indexer import OlistIndexer
-from src.payment_agent import PaymentAgent
-from src.policy_agent import PolicyAgent
+from src.data_store import DataStore
+from src.agents.payment_agent import PaymentAgent
+from src.agents.policy_agent import PolicyAgent
+from pathlib import Path
 
-indexer = OlistIndexer()
-payment_agent = PaymentAgent()
-policy_agent = PolicyAgent()
+indexer = DataStore(Path("data"))
+payment_agent = PaymentAgent(data_store=indexer)
+policy_agent = PolicyAgent(data_store=indexer)
+
 
 # Lấy 1 order làm mẫu dữ liệu
 sample_order_id = list(indexer.orders.keys())[0]
 context = indexer.get_order_context(sample_order_id)
+
 
 def print_test_detail(test_num, test_title, pay_res, pol_res):
     print(f"==================================================")
@@ -36,6 +39,7 @@ def print_test_detail(test_num, test_title, pay_res, pol_res):
     print(f"  - Bên chịu trách nhiệm       : {pol_res['root_cause_analysis']['responsible_parties']}")
     print(f"  - Chuỗi Actions             : {pol_res['resolution_actions']}")
     print(f"==================================================\n")
+
 
 # 1. Đơn hàng gốc có split payment (2 dòng thanh toán)
 pay_res_std = payment_agent.process(context["items"], context["payments"])
