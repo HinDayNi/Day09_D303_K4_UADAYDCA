@@ -3,7 +3,8 @@
   "case_assessment": {
     "primary_issue": "late_delivery_seller",
     "secondary_issues": [
-      "split_payment"
+      "split_payment",
+      "repeat_customer"
     ],
     "case_status": "action_required",
     "confidence": 1.0
@@ -94,7 +95,9 @@
     "recommended_refund_brl": 18.27
   },
   "resolution_actions": [
+    "refund_freight",
     "review_seller_handoff",
-    "verify_refund_completion"
+    "verify_refund_completion",
+    "verify_payment_allocation"
   ]
 }

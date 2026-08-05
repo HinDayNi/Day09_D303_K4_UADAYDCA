@@ -107,13 +107,23 @@ class PolicyAgent:
             cust_res = bundle_dict.get("customer_result", {})
 
             order_status = order_prod.get("order_status") or order_prod.get("order_context", {}).get("order_status", "delivered")
-            data_flags = cust_res.get("data_flags", {})
+            
+            cust_context = cust_res.get("customer_context", {}) if isinstance(cust_res.get("customer_context"), dict) else {}
+            related_orders = cust_context.get("related_order_ids") or cust_res.get("related_order_ids", [])
 
-            decision = self.evaluate_with_llm_or_fallback(
+            combined_flags = {
+                "multi_item_order": bool(order_prod.get("multi_item_order") or cust_res.get("data_flags", {}).get("multi_item_order")),
+                "multi_seller_order": bool(order_prod.get("multi_seller_order") or cust_res.get("data_flags", {}).get("multi_seller_order")),
+                "split_payment": bool(payment_res.get("payment_flags", {}).get("split_payment") or payment_res.get("split_payment")),
+                "repeat_customer": bool(related_orders or cust_res.get("data_flags", {}).get("repeat_customer")),
+                "multiple_categories": bool(order_prod.get("multiple_categories") or cust_res.get("data_flags", {}).get("multiple_categories")),
+            }
+
+            decision = self.evaluate(
                 order_status=order_status,
                 payment_result=payment_res,
                 delivery_analysis=delivery_res,
-                data_flags=data_flags
+                data_flags=combined_flags
             )
 
             return HandoffEnvelope(
@@ -152,52 +162,6 @@ class PolicyAgent:
                     status="failed",
                     errors=[str(exc)]
                 )
-
-    def evaluate_with_llm_or_fallback(
-        self,
-        *,
-        order_status: str,
-        payment_result: Mapping[str, Any],
-        delivery_analysis: Mapping[str, Any],
-        data_flags: Mapping[str, Any]
-    ) -> dict[str, Any]:
-        # 1. Try LLM execution if client available
-        if self.llm_client.is_available():
-            try:
-                user_prompt = f"""
-Facts for evaluation:
-- order_status: {order_status}
-- payment_result: {json.dumps(payment_result, default=str)}
-- delivery_analysis: {json.dumps(delivery_analysis, default=str)}
-- data_flags: {json.dumps(data_flags, default=str)}
-"""
-                allowed_primary_issues = {
-                    "canceled_order_paid",
-                    "unavailable_order_paid",
-                    "late_delivery_seller",
-                    "late_delivery_logistics",
-                    "valid_split_payment",
-                    "unsupported_late_claim",
-                }
-
-
-                llm_result = self.llm_client.generate_json(POLICY_SYSTEM_PROMPT, user_prompt)
-                if llm_result and isinstance(llm_result.get("case_assessment"), dict):
-                    p_issue = llm_result["case_assessment"].get("primary_issue")
-                    if p_issue in allowed_primary_issues:
-                        return llm_result
-
-
-            except Exception:
-                pass
-
-        # 2. Fallback to deterministic evaluate rules
-        return self.evaluate(
-            order_status=order_status,
-            payment_result=payment_result,
-            delivery_analysis=delivery_analysis,
-            data_flags=data_flags
-        )
 
     def evaluate(
         self,
@@ -306,11 +270,11 @@ Facts for evaluation:
         data_flags: Mapping[str, Any], payment_flags: Mapping[str, Any]
     ) -> list[str]:
         ordered_conditions = (
-            ("multi_item_order", data_flags.get("multi_item_order") is True),
-            ("multi_seller_order", data_flags.get("multi_seller_order") is True),
-            ("split_payment", payment_flags.get("split_payment") is True),
-            ("repeat_customer", data_flags.get("repeat_customer") is True),
-            ("multiple_categories", data_flags.get("multiple_categories") is True),
+            ("multi_item_order", bool(data_flags.get("multi_item_order"))),
+            ("multi_seller_order", bool(data_flags.get("multi_seller_order"))),
+            ("split_payment", bool(data_flags.get("split_payment") or payment_flags.get("split_payment"))),
+            ("repeat_customer", bool(data_flags.get("repeat_customer"))),
+            ("multiple_categories", bool(data_flags.get("multiple_categories"))),
         )
         return [name for name, enabled in ordered_conditions if enabled]
 
