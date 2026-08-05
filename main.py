@@ -68,9 +68,14 @@ def main():
             else:
                 fail_count += 1
 
+    from src.verifier import write_metadata
+    write_metadata(model_name="qwen2.5-7b-instruct", param_size="7B", framework="Custom Multi-Agent", log_dir=".")
+    write_metadata(model_name="qwen2.5-7b-instruct", param_size="7B", framework="Custom Multi-Agent", log_dir="logging")
+
     print("\n" + "=" * 60)
     print(f"🏁 Hoàn thành Batch Run: {success_count} thành công, {fail_count} thất bại.")
     print(f"📄 Trace log đã lưu tại: trace.jsonl")
+    print(f"📄 Metadata đã lưu tại: metadata.json")
     print(f"📁 Output files tại: {output_dir}/")
     print("=" * 60)
 

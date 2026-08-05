@@ -287,7 +287,7 @@ Facts for evaluation:
         elif primary_issue == "late_delivery_logistics":
             actions.append("review_carrier_delay")
 
-        if primary_issue in {"canceled_order_paid", "unavailable_order_paid"}:
+        if decision["financial_resolution"]["recommended_refund_brl"] > 0 or decision["case_assessment"]["case_status"] == "action_required":
             actions.append("verify_refund_completion")
         if "multi_seller_order" in secondary:
             actions.append("coordinate_multi_seller_case")

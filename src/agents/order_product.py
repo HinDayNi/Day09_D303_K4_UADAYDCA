@@ -35,6 +35,14 @@ class OrderProductAgent:
                         pass
                 categories = list(dict.fromkeys(categories))
 
+                seller_shipping_limits = [
+                    {
+                        "seller_id": str(it["seller_id"]),
+                        "shipping_limit_at": str(it["shipping_limit_date"]) if it.get("shipping_limit_date") else None
+                    }
+                    for it in items if it.get("seller_id")
+                ]
+
                 data = {
                     "order_id": claimed_order_id,
                     "order_status": order.get("order_status", "delivered"),
@@ -43,6 +51,7 @@ class OrderProductAgent:
                     "sellers": sellers,
                     "products": products,
                     "categories": categories,
+                    "seller_shipping_limits": seller_shipping_limits,
                     "multi_item_order": len(items) >= 2,
                     "multi_seller_order": len(sellers) >= 2,
                     "multiple_categories": len(categories) >= 2,

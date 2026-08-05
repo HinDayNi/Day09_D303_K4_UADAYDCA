@@ -30,28 +30,37 @@ class ResultAssembler:
         resolution_actions = policy_data.get("resolution_actions", [])
 
         # 1. Affected entities
+        # 1. Affected entities
         items_raw = ord_prod.get("items", [])
         item_ids = [f"{claimed_order_id}:{it.get('order_item_id')}" for it in items_raw][:5]
         order_ids = [claimed_order_id][:5] if claimed_order_id else []
-        seller_ids = ord_prod.get("sellers", [])[:3]
+        seller_ids = ord_prod.get("sellers", [])[:3] if item_ids else []
         payment_ids = pay.get("affected_payment_ids") or pay.get("payment_ids", [])[:5]
 
         # 2. Customer context
-        customer_unique_id = cust.get("customer_unique_id", "")
-        related_order_ids = cust.get("related_order_ids", [])[:5]
+        cust_ctx = cust.get("customer_context", {}) if isinstance(cust.get("customer_context"), dict) else cust
+        customer_unique_id = cust_ctx.get("customer_unique_id", "") or cust.get("customer_unique_id", "")
+        related_order_ids = (cust_ctx.get("related_order_ids") if "related_order_ids" in cust_ctx else cust.get("related_order_ids", []))[:5]
 
         # 3. Product context
-        product_ids = ord_prod.get("products", [])[:5]
-        category_names = ord_prod.get("categories", [])[:5]
+        prod_ctx = cust.get("product_context", {}) if isinstance(cust.get("product_context"), dict) else {}
+        if item_ids:
+            product_ids = (prod_ctx.get("product_ids") or ord_prod.get("products", []))[:5]
+            category_names = (prod_ctx.get("category_names") or ord_prod.get("categories", []))[:5]
+        else:
+            product_ids = []
+            category_names = []
 
         # 4. Delivery analysis
+        seller_handoff_analysis = deliv.get("seller_handoff_analysis", []) if item_ids else []
+        late_handoff_seller_ids = deliv.get("late_handoff_seller_ids", []) if item_ids else []
         delivery_analysis = {
             "delivered_at": deliv.get("delivered_at"),
             "estimated_delivery_at": deliv.get("estimated_delivery_at"),
             "carrier_handoff_at": deliv.get("carrier_handoff_at"),
             "delivery_variance_hours": deliv.get("delivery_variance_hours"),
-            "seller_handoff_analysis": deliv.get("seller_handoff_analysis", []),
-            "late_handoff_seller_ids": deliv.get("late_handoff_seller_ids", [])
+            "seller_handoff_analysis": seller_handoff_analysis,
+            "late_handoff_seller_ids": late_handoff_seller_ids
         }
 
         # 5. Payment reconciliation
