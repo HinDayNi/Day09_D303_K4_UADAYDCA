@@ -121,12 +121,14 @@ def is_valid_case_status(value: str) -> bool:
 def round2(value: Any) -> bool:
     if value is None:
         return True
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+    if isinstance(value, bool):
         return False
-    # Làm tròn chuẩn 2 chữ số thập phân và kiểm tra chênh lệch vi mô
-    rounded = round(float(value), 2)
-    return abs(float(value) - rounded) < 1e-6
-
+    try:
+        val_float = float(value)
+        rounded = round(val_float, 2)
+        return abs(val_float - rounded) < 1e-6
+    except (ValueError, TypeError):
+        return False
 
 def validate_output_schema(output: Dict[str, Any]) -> List[str]:
     errors = []
