@@ -1,39 +1,79 @@
 from typing import Any, Dict
+from pathlib import Path
 from src.schemas.handoff import HandoffEnvelope
+from src.data_store import DataStore
 
 class OrderProductAgent:
     """
-    Agent 2B: Tra cứu đơn hàng, danh sách item, seller, product và category.
-    Phụ trách bởi: Người 2 (Data, Customer & Product)
+    Agent 2B: Tra cứu đơn hàng, danh sách item, seller, product và category từ Olist DataStore.
     """
-    def __init__(self, repo=None):
-        self.repo = repo
+    def __init__(self, repo=None, data_store=None):
+        self.repo = repo or data_store
+        if self.repo is None:
+            data_dir = Path("data")
+            if data_dir.exists():
+                try:
+                    self.repo = DataStore(data_dir)
+                except Exception:
+                    self.repo = None
 
     def run(self, case_id: str, claimed_order_id: str) -> HandoffEnvelope:
-        # Stub implementation - sẽ được Người 2 cập nhật logic join CSV thực tế
+        if self.repo is not None and hasattr(self.repo, "get_order"):
+            try:
+                order = self.repo.get_order(claimed_order_id)
+                items = self.repo.get_items_for_order(claimed_order_id)
+                sellers = list(dict.fromkeys(str(it["seller_id"]) for it in items if it.get("seller_id")))
+                products = list(dict.fromkeys(str(it["product_id"]) for it in items if it.get("product_id")))
+                categories = []
+                for pid in products:
+                    try:
+                        p = self.repo.get_product(pid)
+                        cat = p.get("product_category_name")
+                        if cat:
+                            categories.append(str(cat))
+                    except Exception:
+                        pass
+                categories = list(dict.fromkeys(categories))
+
+                data = {
+                    "order_id": claimed_order_id,
+                    "order_status": order.get("order_status", "delivered"),
+                    "has_items": bool(items),
+                    "items": [dict(it) for it in items],
+                    "sellers": sellers,
+                    "products": products,
+                    "categories": categories,
+                    "multi_item_order": len(items) >= 2,
+                    "multi_seller_order": len(sellers) >= 2,
+                    "multiple_categories": len(categories) >= 2,
+                    "delivered_at": order.get("order_delivered_customer_date"),
+                    "estimated_delivery_at": order.get("order_estimated_delivery_date"),
+                    "carrier_handoff_at": order.get("order_delivered_carrier_date")
+                }
+                return HandoffEnvelope(
+                    case_id=case_id,
+                    producer="order_product_agent",
+                    consumer="coordinator_agent",
+                    status="success",
+                    data=data
+                )
+            except Exception as e:
+                pass
+
         data = {
             "order_id": claimed_order_id,
             "order_status": "delivered",
             "has_items": True,
-            "items": [
-                {
-                    "order_item_id": 1,
-                    "product_id": "prod_stub_001",
-                    "seller_id": "seller_stub_001",
-                    "price": 100.0,
-                    "freight_value": 15.0,
-                    "shipping_limit_date": "2018-03-15 20:31:15"
-                }
-            ],
-            "sellers": ["seller_stub_001"],
-            "products": ["prod_stub_001"],
-            "categories": ["beleza_saude"],
+            "items": [],
+            "sellers": [],
+            "products": [],
+            "categories": [],
             "multi_item_order": False,
             "multi_seller_order": False,
             "multiple_categories": False,
-            "delivered_at": "2018-03-20 15:00:00",
-            "estimated_delivery_at": "2018-03-25 00:00:00",
-            "carrier_handoff_at": "2018-03-14 10:00:00"
+            "delivered_at": None,
+            "estimated_delivery_at": None,
+            "carrier_handoff_at": None
         }
         return HandoffEnvelope(
             case_id=case_id,

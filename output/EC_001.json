@@ -2,50 +2,55 @@
   "case_id": "EC_001",
   "case_assessment": {
     "primary_issue": "unsupported_late_claim",
-    "secondary_issues": [],
+    "secondary_issues": [
+      "multi_item_order",
+      "repeat_customer"
+    ],
     "case_status": "no_action",
-    "confidence": 0.95
+    "confidence": 1.0
   },
   "affected_entities": {
     "order_ids": [
-      "e481f51cbd542400be6542e350f4d869"
+      "9b75cdaf2d85857ef023980e15d01546"
     ],
     "item_ids": [
-      "e481f51cbd542400be6542e350f4d869:1"
+      "9b75cdaf2d85857ef023980e15d01546:1",
+      "9b75cdaf2d85857ef023980e15d01546:2"
     ],
     "seller_ids": [
-      "seller_stub_001"
+      "c70c1b0d8ca86052f45a432a38b73958"
     ],
     "payment_ids": [
-      "e481f51cbd542400be6542e350f4d869:1"
+      "9b75cdaf2d85857ef023980e15d01546:1"
     ]
   },
   "customer_context": {
-    "customer_unique_id": "cust_stub_e481f51c",
+    "customer_unique_id": "",
     "related_order_ids": []
   },
   "product_context": {
     "product_ids": [
-      "prod_stub_001"
+      "0a4f9f421af66d2ea061fbb8883419f7",
+      "43b54d1fc56ff394092a3dff6be2d39f"
     ],
     "category_names": [
       "beleza_saude"
     ]
   },
   "delivery_analysis": {
-    "delivered_at": "2018-03-20 15:00:00",
-    "estimated_delivery_at": "2018-03-25 00:00:00",
-    "carrier_handoff_at": "2018-03-14 10:00:00",
-    "delivery_variance_hours": -105.0,
+    "delivered_at": "2018-06-19 01:28:42",
+    "estimated_delivery_at": "2018-06-26 00:00:00",
+    "carrier_handoff_at": "2018-06-15 14:15:00",
+    "delivery_variance_hours": -166.52,
     "seller_handoff_analysis": [],
     "late_handoff_seller_ids": []
   },
   "payment_reconciliation": {
     "currency": "BRL",
-    "item_total_brl": 100.0,
-    "freight_total_brl": 15.0,
-    "expected_total_brl": 115.0,
-    "payment_total_brl": 115.0,
+    "item_total_brl": 220.64,
+    "freight_total_brl": 16.7,
+    "expected_total_brl": 237.34,
+    "payment_total_brl": 237.34,
     "difference_brl": 0.0,
     "reconciled": true,
     "payment_types": [
@@ -62,9 +67,10 @@
     "responsible_parties": []
   },
   "evidence_ids": [
-    "order:e481f51cbd542400be6542e350f4d869",
-    "item:e481f51cbd542400be6542e350f4d869:1",
-    "payment:e481f51cbd542400be6542e350f4d869:1",
+    "order:9b75cdaf2d85857ef023980e15d01546",
+    "item:9b75cdaf2d85857ef023980e15d01546:1",
+    "item:9b75cdaf2d85857ef023980e15d01546:2",
+    "payment:9b75cdaf2d85857ef023980e15d01546:1",
     "policy:DELIVERY_WITHIN_ESTIMATE"
   ],
   "financial_resolution": {

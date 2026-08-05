@@ -1,0 +1,17 @@
+{
+  "system_name": "Multi-Agent E-Commerce Dispute Resolution System",
+  "version": "2.0.0",
+  "llm_provider": "OpenRouter API",
+  "model_name": "qwen/qwen3.5-9b",
+  "framework": "Custom Agentic Multi-Agent Handoff Pipeline",
+  "runtime": "Python 3.11+",
+  "dataset": "Olist Brazilian E-Commerce",
+  "agent_architecture": [
+    "CoordinatorAgent",
+    "CustomerProductAgent",
+    "DeliveryAgent",
+    "PaymentAgent",
+    "PolicyAgent",
+    "VerifierAgent"
+  ]
+}

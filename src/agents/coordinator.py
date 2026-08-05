@@ -7,12 +7,14 @@ from src.schemas.handoff import HandoffEnvelope, FactBundle, ValidationReport
 from src.trace import TraceSink
 from src.assembler import ResultAssembler
 
-from src.agents.customer import CustomerAgent
+from src.agents.customer_product_agent import CustomerProductAgent as CustomerAgent
 from src.agents.order_product import OrderProductAgent
 from src.agents.delivery import DeliveryAgent
-from src.agents.payment import PaymentAgent
-from src.agents.policy import PolicyAgent
+from src.agents.payment_agent import PaymentAgent
+from src.agents.policy_agent import PolicyAgent
 from src.agents.verifier import VerifierAgent
+from src.llm_client import LLMClient
+
 
 
 # =====================================================================
@@ -118,7 +120,20 @@ class CoordinatorAgent:
         policy_agent: Optional[PolicyAgent] = None,
         verifier_agent: Optional[VerifierAgent] = None
     ):
-        self.repo = repo
+        if repo is None:
+            from pathlib import Path
+            from src.data_store import DataStore
+            data_dir = Path("data")
+            if data_dir.exists():
+                try:
+                    self.repo = DataStore(data_dir)
+                except Exception:
+                    self.repo = None
+            else:
+                self.repo = None
+        else:
+            self.repo = repo
+
         self.trace_sink = trace_sink or TraceSink()
         self.assembler = ResultAssembler()
         self.prompt = COORDINATOR_SYSTEM_PROMPT
@@ -130,7 +145,10 @@ class CoordinatorAgent:
             try:
                 return agent_cls(repo=self.repo)
             except TypeError:
-                return agent_cls()
+                try:
+                    return agent_cls(data_store=self.repo)
+                except TypeError:
+                    return agent_cls()
 
         self.customer_agent = _init_agent(customer_agent, CustomerAgent)
         self.order_product_agent = _init_agent(order_product_agent, OrderProductAgent)
@@ -138,6 +156,8 @@ class CoordinatorAgent:
         self.payment_agent = _init_agent(payment_agent, PaymentAgent)
         self.policy_agent = _init_agent(policy_agent, PolicyAgent)
         self.verifier_agent = _init_agent(verifier_agent, VerifierAgent)
+
+
 
         # Agent Registry (Danh mục các Agent sẵn sàng được chọn gọi động)
         self.agent_registry = {
@@ -148,6 +168,8 @@ class CoordinatorAgent:
             "policy_agent": self.policy_agent,
             "verifier_agent": self.verifier_agent,
         }
+        self.llm_client = LLMClient()
+
 
     def _build_initial_plan(self, input_case: InputCase) -> StatePlan:
         """

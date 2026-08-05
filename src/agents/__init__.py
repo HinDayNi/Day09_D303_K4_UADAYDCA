@@ -1,23 +1,17 @@
 """Agent implementations used by the investigation coordinator."""
 
 from .coordinator import CoordinatorAgent
-from .customer import CustomerAgent
 from .customer_product_agent import CustomerProductAgent
 from .order_product import OrderProductAgent
 from .delivery import DeliveryAgent
-from .payment import PaymentAgent
-from .policy import PolicyAgent
-from .verifier import VerifierAgent
+from .payment_agent import PaymentAgent
+from .policy_agent import PolicyAgent, PolicyDecisionError
+from .verifier import VerifierAgent, validate_output
 
-try:
-    from .payment_agent import PaymentAgent as PaymentAgentImpl
-except ImportError:
-    pass
-
-try:
-    from .policy_agent import PolicyAgent as PolicyAgentImpl, PolicyDecisionError
-except ImportError:
-    pass
+# Aliases for backwards compatibility
+CustomerAgent = CustomerProductAgent
+PaymentAgentImpl = PaymentAgent
+PolicyAgentImpl = PolicyAgent
 
 __all__ = [
     "CoordinatorAgent",
@@ -26,6 +20,11 @@ __all__ = [
     "OrderProductAgent",
     "DeliveryAgent",
     "PaymentAgent",
+    "PaymentAgentImpl",
     "PolicyAgent",
+    "PolicyAgentImpl",
+    "PolicyDecisionError",
     "VerifierAgent",
+    "validate_output",
 ]
+

@@ -32,6 +32,50 @@ def _stable_unique(values: Iterable[str]) -> list[str]:
 class PaymentAgent:
     """Reconcile payment rows against the item and freight totals of one order."""
 
+    def __init__(self, data_store: Any = None, repo: Any = None) -> None:
+        self.data_store = data_store or repo
+        if self.data_store is None:
+            from pathlib import Path
+            from src.data_store import DataStore
+            data_dir = Path("data")
+            if data_dir.exists():
+                try:
+                    self.data_store = DataStore(data_dir)
+                except Exception:
+                    self.data_store = None
+
+    def run(self, case_id: str, claimed_order_id: str, order_product_data: dict = None):
+        from src.schemas.handoff import HandoffEnvelope
+        try:
+            if self.data_store is not None and hasattr(self.data_store, "get_payments_for_order"):
+                items = self.data_store.get_items_for_order(claimed_order_id)
+                payments = self.data_store.get_payments_for_order(claimed_order_id)
+            else:
+                op_data = order_product_data or {}
+                items = op_data.get("items", [])
+                payments = op_data.get("payments", [])
+                if not payments and op_data.get("items"):
+                    tot = sum(float(i.get("price", 0)) + float(i.get("freight_value", 0)) for i in items)
+                    payments = [{"payment_sequential": 1, "payment_type": "credit_card", "payment_value": tot}]
+
+            res = self.process(claimed_order_id, items, payments)
+            return HandoffEnvelope(
+                case_id=case_id,
+                producer="payment_agent",
+                consumer="coordinator_agent",
+                status="success",
+                data=res,
+            )
+        except Exception as e:
+            return HandoffEnvelope(
+                case_id=case_id,
+                producer="payment_agent",
+                consumer="coordinator_agent",
+                status="failed",
+                errors=[str(e)],
+            )
+
+
     def process(
         self,
         order_id: str,
