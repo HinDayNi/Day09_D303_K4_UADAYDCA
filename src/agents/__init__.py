@@ -9,6 +9,16 @@ from .payment import PaymentAgent
 from .policy import PolicyAgent
 from .verifier import VerifierAgent
 
+try:
+    from .payment_agent import PaymentAgent as PaymentAgentImpl
+except ImportError:
+    pass
+
+try:
+    from .policy_agent import PolicyAgent as PolicyAgentImpl, PolicyDecisionError
+except ImportError:
+    pass
+
 __all__ = [
     "CoordinatorAgent",
     "CustomerAgent",
