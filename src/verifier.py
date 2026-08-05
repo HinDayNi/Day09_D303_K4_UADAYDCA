@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-from src.schemas import validate_output_schema
+from src.schemass import validate_output_schema
 
 
 class CSVDataStore:

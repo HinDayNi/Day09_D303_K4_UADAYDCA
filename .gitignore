@@ -1,6 +1,7 @@
 # Virtual environment
 venv/
 .venv/
+*.egg-info/
 
 # Python
 __pycache__/
@@ -18,14 +19,22 @@ firebase/
 *-firebase-*.json
 firebase-admin.json
 *.pem
+serviceAccountKey.json
 
 # Uploads & Temp processing directories
 uploads/
 input/
 output/
+data/_tmp_pdf/
+pageindex_doc_ids.json
+pageindex_pdfs/
+chroma_db/
 
-# Logs
+# Logs & Cache
 *.log
+.pytest_cache/
+.mypy_cache/
+*.tmp
 
 # IDE
 .vscode/
@@ -34,9 +43,3 @@ output/
 # OS
 .DS_Store
 Thumbs.db
-
-# pytest & mypy
-.pytest_cache/
-.mypy_cache/
-
-serviceAccountKey.json
