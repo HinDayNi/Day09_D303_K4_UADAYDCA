@@ -2,10 +2,12 @@ import os
 import glob
 import json
 import sys
+from pathlib import Path
 from typing import List
 
 from src.schemas.task import InputCase
 from src.agents.coordinator import CoordinatorAgent
+from src.data_store import DataStore
 from src.writer import OutputWriter
 from src.trace import TraceSink
 
@@ -17,12 +19,17 @@ def main():
 
     input_dir = "input"
     output_dir = "output"
+    data_dir = Path("data")
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
+    print(f"📦 Đang nạp DataStore từ '{data_dir}/'...")
+    data_store = DataStore(data_dir)
+    print("✅ DataStore sẵn sàng.\n")
+
     trace_sink = TraceSink(trace_path="trace.jsonl")
     writer = OutputWriter(output_dir=output_dir)
-    coordinator = CoordinatorAgent(trace_sink=trace_sink)
+    coordinator = CoordinatorAgent(repo=data_store, trace_sink=trace_sink)
 
     # Tìm các file input EC_*.json
     input_files = sorted(glob.glob(os.path.join(input_dir, "EC_*.json")))

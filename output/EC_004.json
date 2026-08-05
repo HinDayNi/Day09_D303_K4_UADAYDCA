@@ -1,51 +1,61 @@
 {
   "case_id": "EC_004",
   "case_assessment": {
-    "primary_issue": "unsupported_late_claim",
-    "secondary_issues": [],
-    "case_status": "no_action",
-    "confidence": 0.95
+    "primary_issue": "canceled_order_paid",
+    "secondary_issues": [
+      "multi_item_order"
+    ],
+    "case_status": "action_required",
+    "confidence": 1.0
   },
   "affected_entities": {
     "order_ids": [
       "5d9c5817e278892b7498d90bfa28ade8"
     ],
     "item_ids": [
-      "5d9c5817e278892b7498d90bfa28ade8:1"
+      "5d9c5817e278892b7498d90bfa28ade8:1",
+      "5d9c5817e278892b7498d90bfa28ade8:2"
     ],
     "seller_ids": [
-      "seller_stub_001"
+      "340636a908b13bbe0f4fb63fbe1d0c03"
     ],
     "payment_ids": [
       "5d9c5817e278892b7498d90bfa28ade8:1"
     ]
   },
   "customer_context": {
-    "customer_unique_id": "cust_stub_5d9c5817",
+    "customer_unique_id": "67a7e94ec59ef6d6ba83942c81d39b9a",
     "related_order_ids": []
   },
   "product_context": {
     "product_ids": [
-      "prod_stub_001"
+      "f6dc856631040b5a7843b14a94b09b96"
     ],
     "category_names": [
-      "beleza_saude"
+      "pet_shop"
     ]
   },
   "delivery_analysis": {
-    "delivered_at": "2018-03-20 15:00:00",
-    "estimated_delivery_at": "2018-03-25 00:00:00",
-    "carrier_handoff_at": "2018-03-14 10:00:00",
-    "delivery_variance_hours": -105.0,
-    "seller_handoff_analysis": [],
+    "delivered_at": null,
+    "estimated_delivery_at": "2018-05-10 00:00:00",
+    "carrier_handoff_at": null,
+    "delivery_variance_hours": null,
+    "seller_handoff_analysis": [
+      {
+        "seller_id": "340636a908b13bbe0f4fb63fbe1d0c03",
+        "shipping_limit_at": "2018-05-03 08:31:17",
+        "handoff_variance_hours": null,
+        "late_handoff": false
+      }
+    ],
     "late_handoff_seller_ids": []
   },
   "payment_reconciliation": {
     "currency": "BRL",
-    "item_total_brl": 100.0,
-    "freight_total_brl": 15.0,
-    "expected_total_brl": 115.0,
-    "payment_total_brl": 115.0,
+    "item_total_brl": 221.8,
+    "freight_total_brl": 68.36,
+    "expected_total_brl": 290.16,
+    "payment_total_brl": 290.16,
     "difference_brl": 0.0,
     "reconciled": true,
     "payment_types": [
@@ -55,23 +65,30 @@
   "root_cause_analysis": {
     "ranked_causes": [
       {
-        "cause_code": "DELIVERY_WITHIN_ESTIMATE",
+        "cause_code": "ORDER_CANCELED_AFTER_PAYMENT",
         "rank": 1
       }
     ],
-    "responsible_parties": []
+    "responsible_parties": [
+      {
+        "party_type": "platform",
+        "party_id": "OLIST_PLATFORM"
+      }
+    ]
   },
   "evidence_ids": [
     "order:5d9c5817e278892b7498d90bfa28ade8",
     "item:5d9c5817e278892b7498d90bfa28ade8:1",
+    "item:5d9c5817e278892b7498d90bfa28ade8:2",
     "payment:5d9c5817e278892b7498d90bfa28ade8:1",
-    "policy:DELIVERY_WITHIN_ESTIMATE"
+    "policy:ORDER_CANCELED_AFTER_PAYMENT"
   ],
   "financial_resolution": {
     "currency": "BRL",
-    "recommended_refund_brl": 0.0
+    "recommended_refund_brl": 290.16
   },
   "resolution_actions": [
-    "reject_late_refund"
+    "issue_full_refund",
+    "verify_refund_completion"
   ]
 }

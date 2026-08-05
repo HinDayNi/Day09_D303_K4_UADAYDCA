@@ -201,15 +201,24 @@ class CoordinatorAgent:
                 # Động năng gọi Agent từ Registry dựa theo quyết định trong Plan & Memory
                 if agent_name == "customer_agent":
                     agent = self.agent_registry["customer_agent"]
-                    env = agent.run(case_id, claimed_order_id)
+                    include_history = input_case.investigation_scope.include_customer_history
+                    env = agent.run(
+                        case_id,
+                        claimed_order_id,
+                        include_customer_history=include_history,
+                    )
                     memory.set_fact("customer_result", env.data)
                     plan.mark_step_completed(summary={"status": env.status})
 
                 elif agent_name == "order_product_agent":
                     agent = self.agent_registry["order_product_agent"]
-                    # Kiểm tra xem có method run hay process/analyze
+                    include_products = input_case.investigation_scope.include_product_context
                     if hasattr(agent, "run"):
-                        env = agent.run(case_id, claimed_order_id)
+                        env = agent.run(
+                            case_id,
+                            claimed_order_id,
+                            include_product_context=include_products,
+                        )
                         data = env.data if hasattr(env, "data") else env
                     else:
                         data = agent.process_case(claimed_order_id) if hasattr(agent, "process_case") else {}

@@ -1,53 +1,49 @@
 {
   "case_id": "EC_035",
   "case_assessment": {
-    "primary_issue": "unsupported_late_claim",
-    "secondary_issues": [],
-    "case_status": "no_action",
-    "confidence": 0.95
+    "primary_issue": "unavailable_order_paid",
+    "secondary_issues": [
+      "repeat_customer"
+    ],
+    "case_status": "action_required",
+    "confidence": 1.0
   },
   "affected_entities": {
     "order_ids": [
       "ae443cb420061bab1f2c5e3ad279fde8"
     ],
-    "item_ids": [
-      "ae443cb420061bab1f2c5e3ad279fde8:1"
-    ],
-    "seller_ids": [
-      "seller_stub_001"
-    ],
+    "item_ids": [],
+    "seller_ids": [],
     "payment_ids": [
       "ae443cb420061bab1f2c5e3ad279fde8:1"
     ]
   },
   "customer_context": {
-    "customer_unique_id": "cust_stub_ae443cb4",
-    "related_order_ids": []
-  },
-  "product_context": {
-    "product_ids": [
-      "prod_stub_001"
-    ],
-    "category_names": [
-      "beleza_saude"
+    "customer_unique_id": "6e14116d3471123fcf057c203fd7e801",
+    "related_order_ids": [
+      "f442020e13b718d40746ce039d97b4c2"
     ]
   },
+  "product_context": {
+    "product_ids": [],
+    "category_names": []
+  },
   "delivery_analysis": {
-    "delivered_at": "2018-03-20 15:00:00",
-    "estimated_delivery_at": "2018-03-25 00:00:00",
-    "carrier_handoff_at": "2018-03-14 10:00:00",
-    "delivery_variance_hours": -105.0,
+    "delivered_at": null,
+    "estimated_delivery_at": "2018-03-28 00:00:00",
+    "carrier_handoff_at": null,
+    "delivery_variance_hours": null,
     "seller_handoff_analysis": [],
     "late_handoff_seller_ids": []
   },
   "payment_reconciliation": {
     "currency": "BRL",
-    "item_total_brl": 100.0,
-    "freight_total_brl": 15.0,
-    "expected_total_brl": 115.0,
-    "payment_total_brl": 115.0,
-    "difference_brl": 0.0,
-    "reconciled": true,
+    "item_total_brl": null,
+    "freight_total_brl": null,
+    "expected_total_brl": null,
+    "payment_total_brl": 132.37,
+    "difference_brl": null,
+    "reconciled": null,
     "payment_types": [
       "credit_card"
     ]
@@ -55,23 +51,28 @@
   "root_cause_analysis": {
     "ranked_causes": [
       {
-        "cause_code": "DELIVERY_WITHIN_ESTIMATE",
+        "cause_code": "ORDER_UNAVAILABLE_AFTER_PAYMENT",
         "rank": 1
       }
     ],
-    "responsible_parties": []
+    "responsible_parties": [
+      {
+        "party_type": "platform",
+        "party_id": "OLIST_PLATFORM"
+      }
+    ]
   },
   "evidence_ids": [
     "order:ae443cb420061bab1f2c5e3ad279fde8",
-    "item:ae443cb420061bab1f2c5e3ad279fde8:1",
     "payment:ae443cb420061bab1f2c5e3ad279fde8:1",
-    "policy:DELIVERY_WITHIN_ESTIMATE"
+    "policy:ORDER_UNAVAILABLE_AFTER_PAYMENT"
   ],
   "financial_resolution": {
     "currency": "BRL",
-    "recommended_refund_brl": 0.0
+    "recommended_refund_brl": 132.37
   },
   "resolution_actions": [
-    "reject_late_refund"
+    "issue_full_refund",
+    "verify_refund_completion"
   ]
 }
