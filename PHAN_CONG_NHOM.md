@@ -6,13 +6,13 @@ Nhóm xây dựng hệ thống Multi-Agent để điều tra 50 yêu cầu hỗ 
 
 | Thành viên | Vai trò chính | Phần việc phụ trách |
 | --- | --- | --- |
-| Người 1 | Trưởng nhóm – Coordinator/Orchestration | Điều phối agent, thiết kế luồng xử lý end-to-end, tích hợp module và chạy 50 case |
-| Người 2 | Data, Customer & Product Agent | Nạp và join dữ liệu; tra cứu khách hàng, lịch sử mua hàng, item, seller, product và category |
-| Người 3 | Delivery Agent | Phân tích thời gian giao hàng, xác định seller/carrier giao trễ và tính các chỉ số thời gian |
-| Người 4 | Payment & Policy Agent | Đối soát thanh toán, áp dụng `EC_POLICY_V2`, xác định trách nhiệm, hoàn tiền và hành động xử lý |
-| Người 5 | Verifier, Testing & Submission | Kiểm tra schema, evidence, giới hạn mảng, tạo trace/metadata, kiểm thử và đóng gói bài |
+| Vũ Ngọc Hùng| Trưởng nhóm – Coordinator/Orchestration | Điều phối agent, thiết kế luồng xử lý end-to-end, tích hợp module và chạy 50 case |
+| Đỗ Thành Đạt| Data, Customer & Product Agent | Nạp và join dữ liệu; tra cứu khách hàng, lịch sử mua hàng, item, seller, product và category |
+| Nguyễn Công Việt Quang | Delivery Agent | Phân tích thời gian giao hàng, xác định seller/carrier giao trễ và tính các chỉ số thời gian |
+| Nguyễn Thị Thanh Hiền | Payment & Policy Agent | Đối soát thanh toán, áp dụng `EC_POLICY_V2`, xác định trách nhiệm, hoàn tiền và hành động xử lý |
+| Trần Thị Hường | Verifier, Testing & Submission | Kiểm tra schema, evidence, giới hạn mảng, tạo trace/metadata, kiểm thử và đóng gói bài |
 
-## 2. Người 1 – Coordinator và tích hợp hệ thống
+## 2. Vũ Ngọc Hùng – Coordinator và tích hợp hệ thống
 
 ### Nhiệm vụ
 
@@ -32,7 +32,7 @@ Nhóm xây dựng hệ thống Multi-Agent để điều tra 50 yêu cầu hỗ 
 - `architecture.md`.
 - 50 file trong `output/` sau khi tích hợp.
 
-## 3. Người 2 – Data, Customer và Product
+## 3. Đỗ Thành Đạt – Data, Customer và Product
 
 ### Nhiệm vụ
 
@@ -55,7 +55,7 @@ Nhóm xây dựng hệ thống Multi-Agent để điều tra 50 yêu cầu hỗ 
 - `product_context`.
 - Dữ liệu nền để Delivery Agent và Payment Agent sử dụng.
 
-## 4. Người 3 – Delivery Agent
+## 4. Nguyễn Công Việt Quang – Delivery Agent
 
 ### Nhiệm vụ
 
@@ -86,7 +86,7 @@ handoff_variance_hours
   - `CARRIER_DELIVERED_AFTER_ESTIMATE`.
   - `DELIVERY_WITHIN_ESTIMATE`.
 
-## 5. Người 4 – Payment và Policy
+## 5. Nguyễn Thị Thanh Hiền – Payment và Policy
 
 ### Nhiệm vụ Payment
 
@@ -112,7 +112,7 @@ handoff_variance_hours
 - `financial_resolution`.
 - `resolution_actions`.
 
-## 6. Người 5 – Verifier, kiểm thử và nộp bài
+## 6. Trần Thị Hường – Verifier, kiểm thử và nộp bài
 
 ### Nhiệm vụ
 
