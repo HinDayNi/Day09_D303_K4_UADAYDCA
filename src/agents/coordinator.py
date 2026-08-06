@@ -223,8 +223,15 @@ class CoordinatorAgent:
                 # Động năng gọi Agent từ Registry dựa theo quyết định trong Plan & Memory
                 if agent_name == "customer_agent":
                     agent = self.agent_registry["customer_agent"]
-                    env = agent.run(case_id, claimed_order_id)
+                    scope = input_case.investigation_scope
+                    env = agent.run(
+                        case_id, claimed_order_id,
+                        include_customer_history=scope.include_customer_history,
+                        include_product_context=scope.include_product_context,
+                    )
                     memory.set_fact("customer_result", env.data)
+                    memory.set_fact("include_customer_history", scope.include_customer_history)
+                    memory.set_fact("include_product_context", scope.include_product_context)
                     plan.mark_step_completed(summary={"status": env.status})
 
                 elif agent_name == "order_product_agent":
@@ -288,7 +295,9 @@ class CoordinatorAgent:
                     candidate = self.assembler.assemble(
                         case_id=case_id,
                         fact_bundle=fact_bundle_dict,
-                        policy_data=policy_data
+                        policy_data=policy_data,
+                        include_customer_history=memory.get_fact("include_customer_history", True),
+                        include_product_context=memory.get_fact("include_product_context", True),
                     )
                     memory.set_fact("candidate_output", candidate)
 

@@ -21,7 +21,8 @@ class OrderProductAgent:
         if self.repo is not None and hasattr(self.repo, "get_order"):
             try:
                 order = self.repo.get_order(claimed_order_id)
-                items = self.repo.get_items_for_order(claimed_order_id)
+                canonical_order_id = str(order.get("order_id", claimed_order_id))
+                items = self.repo.get_items_for_order(canonical_order_id)
                 sellers = list(dict.fromkeys(str(it["seller_id"]) for it in items if it.get("seller_id")))
                 products = list(dict.fromkeys(str(it["product_id"]) for it in items if it.get("product_id")))
                 categories = []
@@ -44,7 +45,7 @@ class OrderProductAgent:
                 ]
 
                 data = {
-                    "order_id": claimed_order_id,
+                    "order_id": canonical_order_id,
                     "order_status": order.get("order_status", "delivered"),
                     "has_items": bool(items),
                     "items": [dict(it) for it in items],

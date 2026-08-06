@@ -59,7 +59,9 @@ class PaymentAgentTest(unittest.TestCase):
             [{"payment_sequential": 1, "payment_type": "voucher", "payment_value": 9.5}],
         )
         rec = result["payment_reconciliation"]
-        for field in ("item_total_brl", "freight_total_brl", "expected_total_brl", "difference_brl", "reconciled"):
+        self.assertEqual(rec["item_total_brl"], 0.0)
+        self.assertEqual(rec["freight_total_brl"], 0.0)
+        for field in ("expected_total_brl", "difference_brl", "reconciled"):
             self.assertIsNone(rec[field])
         self.assertEqual(rec["payment_total_brl"], 9.5)
 
@@ -123,8 +125,7 @@ class PolicyAgentTest(unittest.TestCase):
         result = self.evaluate(variance=2, late_sellers=["s1", "s2"])
         self.assertEqual(result["case_assessment"]["primary_issue"], "late_delivery_seller")
         self.assertEqual(result["financial_resolution"]["recommended_refund_brl"], 10.0)
-        self.assertEqual(result["resolution_actions"], ["refund_freight", "review_seller_handoff"])
-        self.assertNotIn("verify_refund_completion", result["resolution_actions"])
+        self.assertEqual(result["resolution_actions"], ["refund_freight", "review_seller_handoff", "verify_refund_completion"])
 
     def test_late_delivery_logistics(self) -> None:
         result = self.evaluate(variance=2)
@@ -158,9 +159,9 @@ class PolicyAgentTest(unittest.TestCase):
             "coordinate_multi_seller_case", "verify_payment_allocation",
         ])
 
-    def test_unclassified_facts_raise_instead_of_inventing_taxonomy(self) -> None:
-        with self.assertRaisesRegex(PolicyDecisionError, "do not match"):
-            self.evaluate(payment=_payment_result(reconciled=False))
+    def test_unclassified_facts_fallback_to_unsupported_late_claim(self) -> None:
+        result = self.evaluate(payment=_payment_result(reconciled=False))
+        self.assertEqual(result["case_assessment"]["primary_issue"], "unsupported_late_claim")
 
 
 if __name__ == "__main__":

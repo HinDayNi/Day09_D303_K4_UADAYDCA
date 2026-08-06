@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from src.data_store import DataIntegrityError, DataStore
+from src.data_store import DataFileError, DataIntegrityError, DataStore, OrderNotFoundError
 
 
 def _unique(values: Iterable[str]) -> list[str]:
@@ -23,14 +23,16 @@ class CustomerProductAgent:
         else:
             self.data_store = store
 
-    def run(self, case_id: str, claimed_order_id: str):
+    def run(self, case_id: str, claimed_order_id: str,
+            include_customer_history: bool = True,
+            include_product_context: bool = True):
         import asyncio
         from src.schemas.handoff import HandoffEnvelope
         case = {
             "customer_request": {"claimed_order_id": claimed_order_id},
             "investigation_scope": {
-                "include_customer_history": True,
-                "include_product_context": True,
+                "include_customer_history": include_customer_history,
+                "include_product_context": include_product_context,
             },
         }
         try:
@@ -53,9 +55,10 @@ class CustomerProductAgent:
 
 
     async def analyze(self, case: Mapping[str, Any]) -> dict[str, Any]:
-        order_id = self._claimed_order_id(case)
+        raw_order_id = self._claimed_order_id(case)
         try:
-            order = self.data_store.get_order(order_id)
+            order = self.data_store.get_order(raw_order_id)
+            order_id = str(order["order_id"])
             customer = self.data_store.get_customer(str(order["customer_id"]))
             customer_unique_id = str(customer["customer_unique_id"])
             items = self.data_store.get_items_for_order(order_id)
@@ -108,6 +111,8 @@ class CustomerProductAgent:
                     "multiple_categories": len(categories) >= 2,
                 },
             }
+        except OrderNotFoundError:
+            raise
         except Exception:
             return {
                 "affected_entities": {

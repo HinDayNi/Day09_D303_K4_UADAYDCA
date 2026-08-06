@@ -126,6 +126,12 @@ class PaymentAgent:
                 MONEY_QUANTUM, rounding=ROUND_HALF_UP
             )
             reconciled = abs(difference) <= RECONCILIATION_TOLERANCE
+        else:
+            item_total = Decimal("0.00")
+            freight_total = Decimal("0.00")
+            expected_total = None
+            difference = None
+            reconciled = None
 
         return {
             "affected_payment_ids": payment_ids[:5],

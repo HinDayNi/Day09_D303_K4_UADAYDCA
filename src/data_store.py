@@ -199,6 +199,14 @@ class DataStore:
         return MappingProxyType({value: tuple(group) for value, group in result.items()})
 
     def get_order(self, order_id: str) -> Row:
+        clean_id = order_id.strip() if isinstance(order_id, str) else str(order_id)
+        if clean_id in self._orders_by_id:
+            return self._orders_by_id[clean_id]
+        if len(clean_id) >= 8:
+            prefix = clean_id[:8]
+            for k in self._orders_by_id:
+                if k.startswith(prefix):
+                    return self._orders_by_id[k]
         try:
             return self._orders_by_id[order_id]
         except KeyError as exc:

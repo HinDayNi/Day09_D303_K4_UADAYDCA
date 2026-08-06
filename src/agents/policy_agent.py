@@ -225,7 +225,7 @@ class PolicyAgent:
                     }
                 ],
             )
-        elif payment_flags.get("split_payment") is True and reconciled is True:
+        elif bool(data_flags.get("split_payment") or payment_flags.get("split_payment")) and reconciled is True:
             decision = self._decision(
                 "valid_split_payment",
                 "MULTIPLE_PAYMENTS_RECONCILED",
